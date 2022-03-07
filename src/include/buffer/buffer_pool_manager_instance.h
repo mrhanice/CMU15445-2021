@@ -60,6 +60,10 @@ class BufferPoolManagerInstance : public BufferPoolManager {
 
  protected:
   /**
+   * add a user-defined function to find a victim page.
+   * */
+  bool findFreePage(frame_id_t *ft);
+  /**
    * Fetch the requested page from the buffer pool.
    * @param page_id id of page to be fetched
    * @return the requested page
@@ -139,9 +143,9 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   /** Page table for keeping track of buffer pool pages. */
   std::unordered_map<page_id_t, frame_id_t> page_table_;
   /** Replacer to find unpinned pages for replacement. */
-  Replacer *replacer_;
+  Replacer *replacer_; // LRU_replacer 所有unpinned pages都插入到到LRU_replacer中，由LRU_replacer来绝决定换出哪个frame
   /** List of free pages. */
-  std::list<frame_id_t> free_list_;
+  std::list<frame_id_t> free_list_; //frame_id 0 1 2 3 4 5 ... Page *page = &pages[frame_id]
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
   std::mutex latch_;
 };

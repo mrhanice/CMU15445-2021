@@ -15,9 +15,10 @@
 #include <list>
 #include <mutex>  // NOLINT
 #include <vector>
-
+#include <memory>
 #include "buffer/replacer.h"
 #include "common/config.h"
+#include <unordered_map>
 
 namespace bustub {
 
@@ -44,9 +45,22 @@ class LRUReplacer : public Replacer {
   void Unpin(frame_id_t frame_id) override;
 
   size_t Size() override;
-
+  void Print();
  private:
   // TODO(student): implement me!
+  struct DLinkedNode {
+    frame_id_t key;
+    DLinkedNode() {}
+    DLinkedNode(frame_id_t k):key(k) {}
+    std::shared_ptr<DLinkedNode> pre;
+    std::shared_ptr<DLinkedNode> next;
+  };
+  int cap;
+  int size;
+  std::mutex mutex;
+  std::shared_ptr<DLinkedNode> head;
+  std::shared_ptr<DLinkedNode> tail;
+  std::unordered_map<frame_id_t,std::shared_ptr<DLinkedNode>> hash;
 };
 
 }  // namespace bustub
