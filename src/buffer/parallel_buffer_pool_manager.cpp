@@ -31,7 +31,7 @@ ParallelBufferPoolManager::~ParallelBufferPoolManager() {
   for(size_t i = 0; i < num_instances_; i++) {
     delete manager_[i];
   }
-  // delete manager_;
+  delete[] manager_;
 }
 
 size_t ParallelBufferPoolManager::GetPoolSize() {
