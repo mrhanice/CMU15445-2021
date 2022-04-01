@@ -13,12 +13,12 @@
 #pragma once
 
 #include <list>
-#include <mutex>  // NOLINT
-#include <vector>
 #include <memory>
+#include <mutex>  // NOLINT
+#include <unordered_map>
+#include <vector>
 #include "buffer/replacer.h"
 #include "common/config.h"
-#include <unordered_map>
 
 namespace bustub {
 
@@ -46,21 +46,22 @@ class LRUReplacer : public Replacer {
 
   size_t Size() override;
   void Print();
+
  private:
   // TODO(student): implement me!
   struct DLinkedNode {
-    frame_id_t key;
-    DLinkedNode() {}
-    DLinkedNode(frame_id_t k):key(k) {}
-    std::shared_ptr<DLinkedNode> pre;
-    std::shared_ptr<DLinkedNode> next;
+    frame_id_t key_;
+    DLinkedNode() = default;
+    explicit DLinkedNode(frame_id_t k) : key_(k) {}
+    std::shared_ptr<DLinkedNode> pre_;
+    std::shared_ptr<DLinkedNode> next_;
   };
-  int cap;
-  int size;
-  std::mutex mutex;
-  std::shared_ptr<DLinkedNode> head;
-  std::shared_ptr<DLinkedNode> tail;
-  std::unordered_map<frame_id_t,std::shared_ptr<DLinkedNode>> hash;
+  int cap_;
+  int size_;
+  std::mutex mutex_;
+  std::shared_ptr<DLinkedNode> head_;
+  std::shared_ptr<DLinkedNode> tail_;
+  std::unordered_map<frame_id_t, std::shared_ptr<DLinkedNode>> hash_;
 };
 
 }  // namespace bustub

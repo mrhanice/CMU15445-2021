@@ -13,10 +13,10 @@
 #pragma once
 
 #include "buffer/buffer_pool_manager.h"
+#include "buffer/buffer_pool_manager_instance.h"
 #include "recovery/log_manager.h"
 #include "storage/disk/disk_manager.h"
 #include "storage/page/page.h"
-#include "buffer/buffer_pool_manager_instance.h"
 
 namespace bustub {
 
@@ -43,16 +43,14 @@ class ParallelBufferPoolManager : public BufferPoolManager {
   size_t num_instances_;
 
   size_t pool_size_;
-   
-  BufferPoolManager** manager_;
-  
+
+  BufferPoolManager **manager_;
+
   std::mutex latch_;
 
-  size_t start_index;
-  
- protected:
+  size_t start_index_;
 
-  
+ protected:
   /**
    * @param page_id id of page
    * @return pointer to the BufferPoolManager responsible for handling given page id

@@ -40,5 +40,7 @@
  * For each key/value pair, we need two additional bits for occupied_ and readable_. 4 * (PAGE_SIZE - 4) / (4 * sizeof
  * (MappingType) + 1) = (PAGE_SIZE - 4)/(sizeof (MappingType) + 0.25) because 0.25 bytes = 2 bits is the space required
  * to maintain the occupied and readable flags for a key value pair.
+ * 一个Page可以存放的Pair个数，因为需要额外的2 bits来存放occupied_和readable_标志，所以size =
+ * page_size/(sizeof(MappingType + 0.25))
  */
 #define BUCKET_ARRAY_SIZE (4 * PAGE_SIZE / (4 * sizeof(MappingType) + 1))

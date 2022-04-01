@@ -131,11 +131,12 @@ class ExtendibleHashTable {
   /**
    * Fetches the a bucket page from the buffer pool manager using the bucket's page_id.
    *
-   * @param bucket_page_id the page_id to fetch
+   * @param page the point of page that save this bucket
    * @return a pointer to a bucket page
    */
-  HASH_TABLE_BUCKET_TYPE *FetchBucketPage(page_id_t bucket_page_id);
+  HASH_TABLE_BUCKET_TYPE *FetchBucketPage(Page *page);
 
+  Page *FetchPage(page_id_t bucket_page_id);
   /**
    * Performs insertion with an optional bucket splitting.
    *
@@ -160,6 +161,9 @@ class ExtendibleHashTable {
    * @param value the value that was removed
    */
   void Merge(Transaction *transaction, const KeyType &key, const ValueType &value);
+
+  // 创建Directory的锁
+  std::mutex directory_lock_;
 
   // member variables
   page_id_t directory_page_id_;

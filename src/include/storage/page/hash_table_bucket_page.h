@@ -132,6 +132,10 @@ class HashTableBucketPage {
    */
   bool IsEmpty();
 
+  // reset occupied_ and readable_
+  void Init();
+
+  std::vector<MappingType> GetMappingTypeArray();
   /**
    * Prints the bucket's occupancy information
    */
@@ -142,7 +146,7 @@ class HashTableBucketPage {
   char occupied_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
   char readable_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
-  MappingType array_[0];
+  MappingType array_[BUCKET_ARRAY_SIZE];
 };
 
 }  // namespace bustub

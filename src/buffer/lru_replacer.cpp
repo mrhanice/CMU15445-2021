@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 //                         BusTub
 //
@@ -15,89 +15,88 @@
 namespace bustub {
 
 LRUReplacer::LRUReplacer(size_t num_pages) {
-    size = 0;
-    cap = num_pages;
-    head = std::make_shared<DLinkedNode>();
-    tail = std::make_shared<DLinkedNode>();
-    head->next = tail;
-    head->pre = tail;
-    tail->next = head;
-    tail->pre = head;
-    
+  size_ = 0;
+  cap_ = num_pages;
+  head_ = std::make_shared<DLinkedNode>();
+  tail_ = std::make_shared<DLinkedNode>();
+  head_->next_ = tail_;
+  head_->pre_ = tail_;
+  tail_->next_ = head_;
+  tail_->pre_ = head_;
 }
 
 LRUReplacer::~LRUReplacer() {
-    while(head) {
-        std::shared_ptr<DLinkedNode> temp = head->next;
-        head->next = nullptr;
-        head = temp;
-     }
-     head = nullptr;
+  while (head_) {
+    std::shared_ptr<DLinkedNode> temp = head_->next_;
+    head_->next_ = nullptr;
+    head_ = temp;
+  }
+  head_ = nullptr;
 
-    while(tail) {
-        std::shared_ptr<DLinkedNode> temp = tail->pre;
-        tail->pre = nullptr;
-        tail = temp;
-    }
-    tail = nullptr;
+  while (tail_) {
+    std::shared_ptr<DLinkedNode> temp = tail_->pre_;
+    tail_->pre_ = nullptr;
+    tail_ = temp;
+  }
+  tail_ = nullptr;
 }
 
 void LRUReplacer::Print() {
-    std::shared_ptr<LRUReplacer::DLinkedNode> pt = head;
-    std::shared_ptr<LRUReplacer::DLinkedNode> pd = tail;
-    while(pt != nullptr && pt != pd) {
-        printf("key = %d\n",pt->key);
-        pt = pt->next;
-    }
+  std::shared_ptr<LRUReplacer::DLinkedNode> pt = head_;
+  std::shared_ptr<LRUReplacer::DLinkedNode> pd = tail_;
+  while (pt != nullptr && pt != pd) {
+    printf("key = %d\n", pt->key_);
+    pt = pt->next_;
+  }
 }
 
 // 使用LRU策略删除一个victim frame，frame_id需要赋值
 bool LRUReplacer::Victim(frame_id_t *frame_id) {
-    std::lock_guard<std::mutex> guard(mutex);
-    if(size == 0) {
-        *frame_id = -1;
-        return false;
-    }
-    *frame_id = (head->next->key);
-    head->next->next->pre = head;
-    head->next = head->next->next;
-    hash.erase(*frame_id);
-    size--;
-    return true; 
+  std::lock_guard<std::mutex> guard(mutex_);
+  if (size_ == 0) {
+    *frame_id = -1;
+    return false;
+  }
+  *frame_id = (head_->next_->key_);
+  head_->next_->next_->pre_ = head_;
+  head_->next_ = head_->next_->next_;
+  hash_.erase(*frame_id);
+  size_--;
+  return true;
 }
 
-
-//有线程 pin这个frame, 表明它不应该成为victim（则在replacer中移除该frame_id）
+// 有线程 pin这个frame, 表明它不应该成为victim（则在replacer中移除该frame_id）
 void LRUReplacer::Pin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guard(mutex);
-    std::unordered_map<frame_id_t,std::shared_ptr<DLinkedNode>>::iterator des = hash.find(frame_id);
-    if(des != hash.end()) {
-        des->second->pre->next = des->second->next;
-        des->second->next->pre = des->second->pre;
-        hash.erase(frame_id);
-        if(size > 0) size--;
+  std::lock_guard<std::mutex> guard(mutex_);
+  std::unordered_map<frame_id_t, std::shared_ptr<DLinkedNode>>::iterator des = hash_.find(frame_id);
+  if (des != hash_.end()) {
+    des->second->pre_->next_ = des->second->next_;
+    des->second->next_->pre_ = des->second->pre_;
+    hash_.erase(frame_id);
+    if (size_ > 0) {
+      size_--;
     }
+  }
 }
 
-//没有线程pin这个frame, 表明它可以成为victim（则将该frame_id添加到replacer）
+// 没有线程pin这个frame, 表明它可以成为victim（则将该frame_id添加到replacer）
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guard(mutex);
-    if(size >= cap) {
-        return;
-    } 
-    std::unordered_map<frame_id_t,std::shared_ptr<DLinkedNode>>::iterator des = hash.find(frame_id);
-    if(des == hash.end()) {
-        std::shared_ptr<DLinkedNode> temp = std::make_shared<DLinkedNode>(frame_id);
-        tail->pre->next = temp;
-        temp->pre = tail->pre;
-        temp->next = tail;
-        tail->pre = temp;
-        size++;
-        hash.insert(std::pair<frame_id_t,std::shared_ptr<DLinkedNode>>(frame_id,temp));
-    }
-    
+  std::lock_guard<std::mutex> guard(mutex_);
+  if (size_ >= cap_) {
+    return;
+  }
+  std::unordered_map<frame_id_t, std::shared_ptr<DLinkedNode>>::iterator des = hash_.find(frame_id);
+  if (des == hash_.end()) {
+    std::shared_ptr<DLinkedNode> temp = std::make_shared<DLinkedNode>(frame_id);
+    tail_->pre_->next_ = temp;
+    temp->pre_ = tail_->pre_;
+    temp->next_ = tail_;
+    tail_->pre_ = temp;
+    size_++;
+    hash_.insert(std::pair<frame_id_t, std::shared_ptr<DLinkedNode>>(frame_id, temp));
+  }
 }
 
-size_t LRUReplacer::Size() { return size; }
+size_t LRUReplacer::Size() { return size_; }
 
 }  // namespace bustub

@@ -119,7 +119,7 @@ TEST(BufferPoolManagerInstanceTest, SampleTest) {
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
   }
-  printf("run to this\n");
+
   for (int i = 0; i < 4; ++i) {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   }

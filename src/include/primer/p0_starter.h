@@ -151,9 +151,8 @@ class RowMatrix : public Matrix<T> {
   T GetElement(int i, int j) const override {
     if (i >= 0 && i < GetRowCount() && j >= 0 && j < GetColumnCount()) {
       return data_[i][j];
-    } else {
-      throw Exception(ExceptionType::OUT_OF_RANGE, "OUT_OF_RANGE");
     }
+    throw Exception(ExceptionType::OUT_OF_RANGE, "OUT_OF_RANGE");
     //    throw NotImplementedException{"RowMatrix::GetElement() not implemented."};
   }
   /**
@@ -188,14 +187,13 @@ class RowMatrix : public Matrix<T> {
   void FillFrom(const std::vector<T> &source) override {
     int row = this->GetRowCount();
     int col = this->GetColumnCount();
-    if ((int)source.size() != row * col) {
+    if (static_cast<int>(source.size()) != row * col) {
       throw Exception(ExceptionType::OUT_OF_RANGE, "OUT_OF_RANGE");
-    } else {
-      int id = 0;
-      for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-          SetElement(i, j, source[id++]);
-        }
+    }
+    int id = 0;
+    for (int i = 0; i < row; i++) {
+      for (int j = 0; j < col; j++) {
+        SetElement(i, j, source[id++]);
       }
     }
     //    throw NotImplementedException{"RowMatrix::FillFrom() not implemented."};
@@ -237,16 +235,16 @@ class RowMatrixOperations {
   static std::unique_ptr<RowMatrix<T>> Add(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB) {
     // TODO(P0): Add implementation
 
-    int rowA = matrixA->GetRowCount();
-    int colA = matrixA->GetColumnCount();
-    int rowB = matrixB->GetRowCount();
-    int colB = matrixB->GetColumnCount();
-    if (rowA != rowB || colA != colB) {
+    int row_a = matrixA->GetRowCount();
+    int col_a = matrixA->GetColumnCount();
+    int row_b = matrixB->GetRowCount();
+    int col_b = matrixB->GetColumnCount();
+    if (row_a != row_b || col_a != col_b) {
       return std::unique_ptr<RowMatrix<T>>(nullptr);
     }
-    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(rowA, colA));
-    for (int i = 0; i < rowA; i++) {
-      for (int j = 0; j < colA; j++) {
+    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(row_a, col_a));
+    for (int i = 0; i < row_a; i++) {
+      for (int j = 0; j < col_a; j++) {
         T val = matrixA->GetElement(i, j) + matrixB->GetElement(i, j);
         res->SetElement(i, j, val);
       }
@@ -264,18 +262,18 @@ class RowMatrixOperations {
   static std::unique_ptr<RowMatrix<T>> Multiply(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB) {
     // TODO(P0): Add implementation
 
-    int rowA = matrixA->GetRowCount();
-    int colA = matrixA->GetColumnCount();
-    int rowB = matrixB->GetRowCount();
-    int colB = matrixB->GetColumnCount();
-    if (colA != rowB) {
+    int row_a = matrixA->GetRowCount();
+    int col_a = matrixA->GetColumnCount();
+    int row_b = matrixB->GetRowCount();
+    int col_b = matrixB->GetColumnCount();
+    if (col_a != row_b) {
       return std::unique_ptr<RowMatrix<T>>(nullptr);
     }
-    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(rowA, colB));
-    for (int i = 0; i < rowA; i++) {
-      for (int j = 0; j < colB; j++) {
+    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(row_a, col_b));
+    for (int i = 0; i < row_a; i++) {
+      for (int j = 0; j < col_b; j++) {
         T val = 0;
-        for (int k = 0; k < colA; k++) {
+        for (int k = 0; k < col_a; k++) {
           val = val + matrixA->GetElement(i, k) * matrixB->GetElement(k, j);
         }
         res->SetElement(i, j, val);
