@@ -7,6 +7,7 @@
 namespace bustub {
 
 template <typename CppType>
+// 生成数值型列值，线性值，循环值，或者随机分布值
 std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) {
   std::vector<Value> values{};
   values.reserve(count);
@@ -43,6 +44,7 @@ std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, 
   return values;
 }
 
+// 生成数据
 std::vector<Value> TableGenerator::MakeValues(ColumnInsertMeta *col_meta, uint32_t count) {
   std::vector<Value> values;
   switch (col_meta->type_) {
@@ -61,6 +63,7 @@ std::vector<Value> TableGenerator::MakeValues(ColumnInsertMeta *col_meta, uint32
   }
 }
 
+// 向table注入数据
 void TableGenerator::FillTable(TableInfo *info, TableInsertMeta *table_meta) {
   uint32_t num_inserted = 0;
   uint32_t batch_size = 128;
@@ -84,6 +87,7 @@ void TableGenerator::FillTable(TableInfo *info, TableInsertMeta *table_meta) {
   }
 }
 
+// 生成test tables
 void TableGenerator::GenerateTestTables() {
   /**
    * This array configures each of the test tables. Each table is configured

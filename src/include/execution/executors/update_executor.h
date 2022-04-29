@@ -44,6 +44,7 @@ class UpdateExecutor : public AbstractExecutor {
   /** Initialize the update */
   void Init() override;
 
+  void UpdateWithIndex(Tuple &tuple, RID &rid);
   /**
    * Yield the next tuple from the udpate.
    * @param[out] tuple The next tuple produced by the update
@@ -72,5 +73,7 @@ class UpdateExecutor : public AbstractExecutor {
   const TableInfo *table_info_;
   /** The child executor to obtain value from */
   std::unique_ptr<AbstractExecutor> child_executor_;
+  TableHeap *table_heap_;
+  Catalog *catalog_;
 };
 }  // namespace bustub

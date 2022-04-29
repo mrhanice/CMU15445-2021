@@ -135,7 +135,7 @@ class HashTableBucketPage {
   // reset occupied_ and readable_
   void Init();
 
-  MappingType *GetMappingTypeArray();
+  std::vector<MappingType> GetMappingTypeArray();
   /**
    * Prints the bucket's occupancy information
    */

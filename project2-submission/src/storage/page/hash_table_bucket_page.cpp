@@ -159,12 +159,11 @@ void HASH_TABLE_BUCKET_TYPE::Init() {
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-MappingType *HASH_TABLE_BUCKET_TYPE::GetMappingTypeArray() {
-  uint32_t num = NumReadable();
-  MappingType *ans = new MappingType[num];
-  for (uint32_t i = 0, id = 0; i < BUCKET_ARRAY_SIZE; i++) {
+std::vector<MappingType> HASH_TABLE_BUCKET_TYPE::GetMappingTypeArray() {
+  std::vector<MappingType> ans;
+  for (uint32_t i = 0; i < BUCKET_ARRAY_SIZE; i++) {
     if (IsReadable(i)) {
-      ans[id++] = array_[i];
+      ans.push_back(array_[i]);
     }
   }
   return ans;

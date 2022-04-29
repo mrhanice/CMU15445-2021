@@ -1,0 +1,87 @@
+template <typename KeyType, typename ValueType, typename KeyComparator>
+bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  table_latch_.WLock();
+  HashTableDirectoryPage *dir_page = FetchDirectoryPage();
+  int64_t split_bucket_index = KeyToDirectoryIndex(key, dir_page);
+  uint32_t split_bucket_depth = dir_page->GetLocalDepth(split_bucket_index);
+
+  // 容量满了，不能扩了
+  if (split_bucket_depth >= MAX_BUCKET_DEPTH) {
+    assert(buffer_pool_manager_->UnpinPage(dir_page->GetPageId(), false));
+    table_latch_.WUnlock();
+    return false;
+  }
+
+  // 看看Directory需不需要扩容
+  if (split_bucket_depth == dir_page->GetGlobalDepth()) {
+    dir_page->IncrGlobalDepth();
+  }
+
+  // 增加local depth
+  dir_page->IncrLocalDepth(split_bucket_index);
+
+  // 获取当前bucket，先将数据保存下来，然后重新初始化它
+  page_id_t split_bucket_page_id = KeyToPageId(key, dir_page);
+  Page *split_bucket_page = FetchPage(split_bucket_page_id);
+  split_bucket_page->WLatch();
+  HASH_TABLE_BUCKET_TYPE *split_bucket = FetchBucketPage(split_bucket_page);
+  uint32_t origin_array_size = split_bucket->NumReadable();
+  MappingType *origin_array = split_bucket->GetMappingTypeArray();
+  split_bucket->Init();
+
+  // 创建一个image bucket，并初始化该image bucket
+  page_id_t image_bucket_page_id;
+  Page *image_bucket_page = buffer_pool_manager_->NewPage(&image_bucket_page_id);
+  assert(image_bucket_page != nullptr);
+  image_bucket_page->WLatch();
+  HASH_TABLE_BUCKET_TYPE *image_bucket = FetchBucketPage(image_bucket_page);
+  uint32_t split_image_bucket_index = dir_page->GetSplitImageIndex(split_bucket_index);
+  dir_page->SetLocalDepth(split_image_bucket_index, dir_page->GetLocalDepth(split_bucket_index));
+  dir_page->SetBucketPageId(split_image_bucket_index, image_bucket_page_id);
+
+  // 重新插入数据
+  for (uint32_t i = 0; i < origin_array_size; i++) {
+    uint32_t target_bucket_index = Hash(origin_array[i].first) & dir_page->GetLocalDepthMask(split_bucket_index);
+    page_id_t target_bucket_index_page = dir_page->GetBucketPageId(target_bucket_index);
+    assert(target_bucket_index_page == split_bucket_page_id || target_bucket_index_page == image_bucket_page_id);
+    // 这里根据新计算的hash结果决定插入哪个bucket
+    if (target_bucket_index_page == split_bucket_page_id) {
+      assert(split_bucket->Insert(origin_array[i].first, origin_array[i].second, comparator_));
+    } else {
+      assert(image_bucket->Insert(origin_array[i].first, origin_array[i].second, comparator_));
+    }
+  }
+  delete[] origin_array;
+  // origin_array.clear();
+
+  // 将所有同一级的bucket设置为相同的local depth和page
+  uint32_t diff = 1 << dir_page->GetLocalDepth(split_bucket_index);
+  for (uint32_t i = split_bucket_index; i >= diff; i -= diff) {
+    dir_page->SetBucketPageId(i, split_bucket_page_id);
+    dir_page->SetLocalDepth(i, dir_page->GetLocalDepth(split_bucket_index));
+  }
+  for (uint32_t i = split_bucket_index; i < dir_page->Size(); i += diff) {
+    dir_page->SetBucketPageId(i, split_bucket_page_id);
+    dir_page->SetLocalDepth(i, dir_page->GetLocalDepth(split_bucket_index));
+  }
+  for (uint32_t i = split_image_bucket_index; i >= diff; i -= diff) {
+    dir_page->SetBucketPageId(i, image_bucket_page_id);
+    dir_page->SetLocalDepth(i, dir_page->GetLocalDepth(split_bucket_index));
+  }
+  for (uint32_t i = split_image_bucket_index; i < dir_page->Size(); i += diff) {
+    dir_page->SetBucketPageId(i, image_bucket_page_id);
+    dir_page->SetLocalDepth(i, dir_page->GetLocalDepth(split_bucket_index));
+  }
+
+  split_bucket_page->WUnlatch();
+  image_bucket_page->WUnlatch();
+  // Unpin
+  assert(buffer_pool_manager_->UnpinPage(split_bucket_page_id, true));
+  assert(buffer_pool_manager_->UnpinPage(image_bucket_page_id, true));
+  assert(buffer_pool_manager_->UnpinPage(dir_page->GetPageId(), true));
+
+  table_latch_.WUnlock();
+  // 最后重新尝试插入
+  // std::cout << "split succeed and key is " << key << std::endl;
+  return Insert(transaction, key, value);
+}
