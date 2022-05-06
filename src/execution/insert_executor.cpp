@@ -18,54 +18,42 @@ namespace bustub {
 
 InsertExecutor::InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *plan,
                                std::unique_ptr<AbstractExecutor> &&child_executor)
-    : AbstractExecutor(exec_ctx),plan_(plan),table_heap_(nullptr),child_executor_(move(child_executor)) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), table_heap_(nullptr), child_executor_(move(child_executor)) {}
 
 void InsertExecutor::Init() {
-    if(plan_->IsRawInsert()) {
-        table_heap_ = exec_ctx_->GetCatalog()->GetTable(plan_->TableOid())->table_.get();
-        st_ = 0;    
-    } else {
-        table_heap_ = exec_ctx_->GetCatalog()->GetTable(plan_->TableOid())->table_.get();
-        child_executor_->Init();
-    }
-    catalog_ = exec_ctx_->GetCatalog();
-    tableinfo_ = catalog_->GetTable(plan_->TableOid());
+  table_heap_ = exec_ctx_->GetCatalog()->GetTable(plan_->TableOid())->table_.get();
+  catalog_ = exec_ctx_->GetCatalog();
+  tableinfo_ = catalog_->GetTable(plan_->TableOid());
 }
 
-bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) { 
-    if(plan_->IsRawInsert()) {
-        if(st_ == plan_->RawValues().size()) {
-            return false;
-        }
-        const std::vector<Value> &row = plan_->RawValuesAt(st_);
-        Schema schema = exec_ctx_->GetCatalog()->GetTable(plan_->TableOid())->schema_;
-        st_++;
-        Tuple temp_tuple(row,&schema);
-        RID new_rid;
-        bool okinsert = table_heap_->InsertTuple(temp_tuple,&new_rid,exec_ctx_->GetTransaction());
-        for(auto &indexinfo: catalog_->GetTableIndexes(tableinfo_->name_)) {
-            indexinfo->index_->InsertEntry(temp_tuple.KeyFromTuple(tableinfo_->schema_, *(indexinfo->index_->GetKeySchema()), indexinfo->index_->GetKeyAttrs()), new_rid, exec_ctx_->GetTransaction());
-        }
-        return okinsert;
-    } else {
-        try {
-            Tuple temp_tuple;
-            RID temp_rid;
-            bool ok = child_executor_->Next(&temp_tuple,&temp_rid);
-            if(ok) {
-                RID new_rid;
-                bool okinsert = table_heap_->InsertTuple(temp_tuple,&new_rid,exec_ctx_->GetTransaction());
-                for(auto &indexinfo: catalog_->GetTableIndexes(tableinfo_->name_)) {
-                    indexinfo->index_->InsertEntry(temp_tuple.KeyFromTuple(tableinfo_->schema_, *(indexinfo->index_->GetKeySchema()), indexinfo->index_->GetKeyAttrs()), new_rid, exec_ctx_->GetTransaction());
-                }
-                return okinsert;
-            } 
-            return false;
-        } catch (Exception &e) {
-            throw Exception(ExceptionType::UNKNOWN_TYPE, "Insert child execute error.");
-            return false;
-        }
-    }   
- }
+bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
+  if (plan_->IsRawInsert()) {
+    for (const auto &row_value : plan_->RawValues()) {
+      insert_tuples_.emplace_back(Tuple(row_value, &(tableinfo_->schema_)));
+    }
+  } else {
+    child_executor_->Init();
+    Tuple temp_tuple;
+    RID temp_rid;
+    while (child_executor_->Next(&temp_tuple, &temp_rid)) {
+      insert_tuples_.emplace_back(temp_tuple);
+    }
+  }
+  for (auto &insert_row : insert_tuples_) {
+    InsertIntoTableWithIndex(&insert_row);
+  }
+  return false;
+}
 
+void InsertExecutor::InsertIntoTableWithIndex(Tuple *tuple) {
+  RID new_rid;
+  bool okinsert = table_heap_->InsertTuple(*tuple, &new_rid, exec_ctx_->GetTransaction());
+  if (okinsert) {
+    for (auto &indexinfo : catalog_->GetTableIndexes(tableinfo_->name_)) {
+      indexinfo->index_->InsertEntry(tuple->KeyFromTuple(tableinfo_->schema_, *(indexinfo->index_->GetKeySchema()),
+                                                         indexinfo->index_->GetKeyAttrs()),
+                                     new_rid, exec_ctx_->GetTransaction());
+    }
+  }
+}
 }  // namespace bustub

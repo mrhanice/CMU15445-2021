@@ -42,7 +42,7 @@ class DeleteExecutor : public AbstractExecutor {
   void Init() override;
 
   // delete tuple and its indexes
-  void DeleteWithIndex(Tuple &tuple, RID &rid);
+  // void DeleteWithIndex(Tuple &tuple, RID &rid);
   /**
    * Yield the next tuple from the delete.
    * @param[out] tuple The next tuple produced by the update

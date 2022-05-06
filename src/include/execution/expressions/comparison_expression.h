@@ -47,6 +47,11 @@ class ComparisonExpression : public AbstractExpression {
     return ValueFactory::GetBooleanValue(PerformComparison(lhs, rhs));
   }
 
+  /*
+    case 10中,child0 是count_a ,child1 是const_100
+    count_a->EvaluateAggregate(group_bys, aggregates)获得的是聚合函数的值
+    const_100->EvaluateAggregate(group_bys, aggregates)返回的仍然是100
+  */
   Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const override {
     Value lhs = GetChildAt(0)->EvaluateAggregate(group_bys, aggregates);
     Value rhs = GetChildAt(1)->EvaluateAggregate(group_bys, aggregates);

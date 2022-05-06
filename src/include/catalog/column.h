@@ -127,7 +127,7 @@ class Column {
   uint32_t column_offset_{0};
 
   /** Expression used to create this column **/
-  const AbstractExpression *expr_; 
+  const AbstractExpression *expr_;
 };
 
 }  // namespace bustub

@@ -62,7 +62,7 @@ class InsertPlanNode : public AbstractPlanNode {
     BUSTUB_ASSERT(IsRawInsert(), "This is not a raw insert, you should use the child plan.");
     return raw_values_[idx];
   }
-  
+
   /** @return The raw values to be inserted */
   const std::vector<std::vector<Value>> &RawValues() const {
     BUSTUB_ASSERT(IsRawInsert(), "This is not a raw insert, you should use the child plan.");

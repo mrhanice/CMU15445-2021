@@ -14,13 +14,14 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
-#include "execution/plans/insert_plan.h"
-#include "storage/table/tuple.h"
-#include "execution/plans/seq_scan_plan.h"
 #include "execution/executors/seq_scan_executor.h"
+#include "execution/plans/insert_plan.h"
+#include "execution/plans/seq_scan_plan.h"
+#include "storage/table/tuple.h"
 
 namespace bustub {
 
@@ -55,6 +56,9 @@ class InsertExecutor : public AbstractExecutor {
    */
   bool Next([[maybe_unused]] Tuple *tuple, RID *rid) override;
 
+  // new add function for insert row into table with indexes.
+  void InsertIntoTableWithIndex(Tuple *tuple);
+
   /** @return The output schema for the insert */
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
 
@@ -63,9 +67,9 @@ class InsertExecutor : public AbstractExecutor {
   const InsertPlanNode *plan_;
   TableHeap *table_heap_;
   std::unique_ptr<AbstractExecutor> child_executor_;
+  std::vector<Tuple> insert_tuples_;
   Catalog *catalog_;
   TableInfo *tableinfo_;
-  size_t st_;
 };
 
 }  // namespace bustub

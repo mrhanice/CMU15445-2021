@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 //                         BusTub
 //
@@ -13,10 +13,47 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/distinct_plan.h"
+#include "include/common/util/hash_util.h"
+
+// 模仿AggregateKey来写,构造DistinctKey
+namespace bustub {
+struct DistinctKey {
+  std::vector<Value> distinct_key_;
+
+  bool operator==(const DistinctKey &other) const {
+    for (size_t i = 0; i < distinct_key_.size(); ++i) {
+      if (distinct_key_[i].CompareEquals(other.distinct_key_[i]) != CmpBool::CmpTrue) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+}  // namespace bustub
+
+// 模仿AggregateKey来写,构造DistinctKey
+namespace std {
+
+template <>
+struct hash<bustub::DistinctKey> {
+  std::size_t operator()(const bustub::DistinctKey &dist_key) const {
+    size_t curr_hash = 0;
+    for (const auto &key : dist_key.distinct_key_) {
+      if (!key.IsNull()) {
+        curr_hash = bustub::HashUtil::CombineHashes(curr_hash, bustub::HashUtil::HashValue(&key));
+      }
+    }
+    return curr_hash;
+  }
+};
+
+}  // namespace std
 
 namespace bustub {
 
@@ -53,5 +90,7 @@ class DistinctExecutor : public AbstractExecutor {
   const DistinctPlanNode *plan_;
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
+  std::unordered_map<DistinctKey, size_t> map_;
+  std::unordered_map<DistinctKey, size_t>::iterator iter_;
 };
 }  // namespace bustub
