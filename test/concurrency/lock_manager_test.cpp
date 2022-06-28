@@ -30,7 +30,7 @@ void CheckTxnLockSize(Transaction *txn, size_t shared_size, size_t exclusive_siz
   EXPECT_EQ(txn->GetSharedLockSet()->size(), shared_size);
   EXPECT_EQ(txn->GetExclusiveLockSet()->size(), exclusive_size);
 }
-
+// 只测试了LockShard，也只有加共享锁
 // Basic shared lock test under REPEATABLE_READ
 void BasicTest1() {
   LockManager lock_mgr{};
@@ -77,8 +77,9 @@ void BasicTest1() {
     delete txns[i];
   }
 }
-TEST(LockManagerTest, DISABLED_BasicTest) { BasicTest1(); }
+TEST(LockManagerTest, BasicTest) { BasicTest1(); }
 
+// 测试两阶段协议，加共享锁与排它锁,无并发和死锁
 void TwoPLTest() {
   LockManager lock_mgr{};
   TransactionManager txn_mgr{&lock_mgr};
@@ -123,8 +124,9 @@ void TwoPLTest() {
 
   delete txn;
 }
-TEST(LockManagerTest, DISABLED_TwoPLTest) { TwoPLTest(); }
+TEST(LockManagerTest, TwoPLTest) { TwoPLTest(); }
 
+// 测试两阶段协议，测试升级锁，无并发，无死锁
 void UpgradeTest() {
   LockManager lock_mgr{};
   TransactionManager txn_mgr{&lock_mgr};
@@ -150,8 +152,9 @@ void UpgradeTest() {
   txn_mgr.Commit(&txn);
   CheckCommitted(&txn);
 }
-TEST(LockManagerTest, DISABLED_UpgradeLockTest) { UpgradeTest(); }
+TEST(LockManagerTest, UpgradeLockTest) { UpgradeTest(); }
 
+// 测试两阶段协议，无锁升级，测试wound-wait策略
 void WoundWaitBasicTest() {
   LockManager lock_mgr{};
   TransactionManager txn_mgr{&lock_mgr};
@@ -192,16 +195,17 @@ void WoundWaitBasicTest() {
 
   // wait for txn1 to lock
   t1_future.wait();
-
+  
   bool res = lock_mgr.LockExclusive(&txn_hold, rid);
+  
   EXPECT_TRUE(res);
-
+  
   wait_thread.join();
 
   CheckGrowing(&txn_hold);
   txn_mgr.Commit(&txn_hold);
   CheckCommitted(&txn_hold);
 }
-TEST(LockManagerTest, DISABLED_WoundWaitBasicTest) { WoundWaitBasicTest(); }
+TEST(LockManagerTest, WoundWaitBasicTest) { WoundWaitBasicTest(); }
 
 }  // namespace bustub

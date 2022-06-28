@@ -58,6 +58,7 @@ void TransactionManager::Commit(Transaction *txn) {
   global_txn_latch_.RUnlock();
 }
 
+// Abort rollback by log
 void TransactionManager::Abort(Transaction *txn) {
   txn->SetState(TransactionState::ABORTED);
   // Rollback before releasing the lock.
