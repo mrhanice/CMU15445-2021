@@ -153,7 +153,7 @@ class Transaction {
         isolation_level_(isolation_level),
         thread_id_(std::this_thread::get_id()),
         txn_id_(txn_id),
-        prev_lsn_(INVALID_LSN), // log sequence number
+        prev_lsn_(INVALID_LSN),  // log sequence number
         shared_lock_set_{new std::unordered_set<RID>},
         exclusive_lock_set_{new std::unordered_set<RID>} {
     // Initialize the sets that will be tracked.
@@ -269,9 +269,9 @@ class Transaction {
   std::shared_ptr<std::unordered_set<page_id_t>> deleted_page_set_;
 
   /** LockManager: the set of shared-locked tuples held by this transaction. */
-  std::shared_ptr<std::unordered_set<RID>> shared_lock_set_; // 事务已经获取到共享锁的tuples  
+  std::shared_ptr<std::unordered_set<RID>> shared_lock_set_;  // 事务已经获取到共享锁的tuples
   /** LockManager: the set of exclusive-locked tuples held by this transaction. */
-  std::shared_ptr<std::unordered_set<RID>> exclusive_lock_set_; // 事务已经获取到排它锁的tuples
+  std::shared_ptr<std::unordered_set<RID>> exclusive_lock_set_;  // 事务已经获取到排它锁的tuples
 };
 
 }  // namespace bustub

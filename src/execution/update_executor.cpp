@@ -38,12 +38,28 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
     throw Exception(ExceptionType::UNKNOWN_TYPE, "Insert child execute error.");
     return false;
   }
+
+  LockManager *lock_manager = GetExecutorContext()->GetLockManager();
+  Transaction *txn = GetExecutorContext()->GetTransaction();
+
   for (auto &tuple_t : update_tuples) {
     // UpdateWithIndex(tuple_t.first, tuple_t.second);
+
+    // 加锁
+    if (lock_manager != nullptr) {
+      if (txn->IsSharedLocked(tuple_t.second)) {
+        lock_manager->LockUpgrade(txn, tuple_t.second);
+      } else {
+        lock_manager->LockExclusive(txn, tuple_t.second);
+      }
+    }
+
     Tuple new_tuple = GenerateUpdatedTuple(tuple_t.first);
     bool ok = table_heap_->UpdateTuple(new_tuple, tuple_t.second, exec_ctx_->GetTransaction());
+
     if (ok) {
       for (auto &indexinfo : catalog_->GetTableIndexes(table_info_->name_)) {
+        // 不要求索引并发处理，只更新索引写集就可
         indexinfo->index_->DeleteEntry(
             tuple_t.first.KeyFromTuple(table_info_->schema_, *(indexinfo->index_->GetKeySchema()),
                                        indexinfo->index_->GetKeyAttrs()),
@@ -52,7 +68,16 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
             new_tuple.KeyFromTuple(table_info_->schema_, *(indexinfo->index_->GetKeySchema()),
                                    indexinfo->index_->GetKeyAttrs()),
             tuple_t.second, exec_ctx_->GetTransaction());
+        // 添加索引写集
+        IndexWriteRecord index_write_record(tuple_t.second, table_info_->oid_, WType::UPDATE, new_tuple,
+                                            indexinfo->index_oid_, catalog_);
+        index_write_record.old_tuple_ = tuple_t.first;
+        txn->GetIndexWriteSet()->emplace_back(index_write_record);
       }
+    }
+    // 解锁
+    if (txn->GetIsolationLevel() != IsolationLevel::REPEATABLE_READ && lock_manager != nullptr) {
+      lock_manager->Unlock(txn, tuple_t.second);
     }
   }
   return false;

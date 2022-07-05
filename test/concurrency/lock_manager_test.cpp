@@ -195,11 +195,11 @@ void WoundWaitBasicTest() {
 
   // wait for txn1 to lock
   t1_future.wait();
-  
+
   bool res = lock_mgr.LockExclusive(&txn_hold, rid);
-  
+
   EXPECT_TRUE(res);
-  
+
   wait_thread.join();
 
   CheckGrowing(&txn_hold);
