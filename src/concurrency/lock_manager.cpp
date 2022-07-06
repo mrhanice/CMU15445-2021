@@ -99,7 +99,7 @@ bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
     while (it != rq.request_queue_.end()) {
       Transaction *tra = TransactionManager::GetTransaction(it->txn_id_);
       // txn->GetTransactionId() == 9 暂时不懂为什么要加这句，不加过不了test_LockManagerTest_WoundWaitFairnessTest，只能得85分
-      if (it->txn_id_ > txn->GetTransactionId() || txn->GetTransactionId() == 9) {
+      if (it->txn_id_ > txn->GetTransactionId()) {
         // 当前事务是老事务，abort掉在等待队列中的新事务
         tra->SetState(TransactionState::ABORTED);
         if (it->lock_mode_ == LockMode::SHARED) {
