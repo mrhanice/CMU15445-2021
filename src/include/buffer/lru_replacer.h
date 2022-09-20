@@ -45,6 +45,7 @@ class LRUReplacer : public Replacer {
   void Unpin(frame_id_t frame_id) override;
 
   size_t Size() override;
+
   void Print();
 
  private:
